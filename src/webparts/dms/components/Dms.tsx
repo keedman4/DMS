@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { IStackProps, Stack } from 'office-ui-fabric-react/lib/Stack';
 import { Spinner, SpinnerSize, SpinnerLabelPosition, TextField, Dropdown, IDropdownStyles, IDropdownOption, DropdownMenuItemType } from 'office-ui-fabric-react';
 import { Panel } from '@fluentui/react/lib/Panel';
-
+import { SPHttpClient, SPHttpClientResponse, ISPHttpClientOptions } from '@microsoft/sp-http';
 import { IDocumentLibraryInformation, Item, SPFI, SPFx, spfi, ICamlQuery } from '@pnp/sp/presets/all';
 
 import { Modal } from 'office-ui-fabric-react/lib/Modal';
@@ -437,10 +437,13 @@ else{
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const [dropdownOptions, setDropdownOptions] = useState<IDropdownOption[]>([]);
-    const [selectedOption, setSelectedOption] = useState(null);
+    const [selectedOption, setSelectedOption] = useState({text: ""} as any);
 
     const [selection, setSelection] = useState(new Selection());
     
+    const [filesUpload, setfilesUpload] = useState({} as any)
+
+    const [Approver, setApprover] = useState("")
 
     // const _getBodyModal = () => {
     //   // Implement the body content for your modal
@@ -640,6 +643,19 @@ else{
   };
 
 
+
+  //console.log("FileItems",filesItem)
+
+
+//Show Dialog
+    // const showDialog = () => {
+    //   setIsDialogVisible(true);
+    // };
+  
+//Hide Dialog
+    // const hideDialog = () => {
+    //   setIsDialogVisible(false);
+    // };
   
 //Show Dialog
 const showModal = () => {
@@ -677,16 +693,92 @@ const hideModal = () => {
 
 
 
-  //Document Upload
+  //Brings out other fields when on selected documents library is selected
   const handleDropdownChange = (_event: any, option: any) => {
       // Update the selected option
     setSelectedOption(option);
+    console.log("Selected",selectedOption)
 
   };
 
 
+  const handleApprover = (event: any) => {
+    // Update the selected option
+  setApprover(event.target.value)
 
-  
+};
+
+
+const handleUploadChange = (event: any) => {
+    // Update the selected option
+  setfilesUpload(event.target.files[0])
+
+};
+
+// const testUpload = ()=>{
+//   console.log("Test")
+// }
+
+
+  const uploadFile = async ()=>{    
+
+    try {
+      const response = await _sp.web
+        .getFolderByServerRelativePath(selectedOption?.text)
+        .files.addUsingPath(`${filesUpload.name}`, filesUpload, {Overwrite: true});
+
+      const fileItem = await response.file.getItem();
+
+    await fileItem.update({
+      Approver: Approver 
+
+    });
+    console.log(Approver)
+
+      const data = await response;
+      
+      return data;
+    } catch (err) {
+      console.error("Error uploading photo:", err);
+      return { status: "rejected", reason: err };
+    }
+
+    // const fileItem = await response.file.getItem();
+
+    // await fileItem.update({
+    //   Approval: 'Approved' /
+    // });
+    
+    // const endpoint: string = props.context.pageContext.web.absoluteUrl + `/_api/web/lists/getByTitle(${selectedOption?.text})/RootFolder/Files/add(url='${filesUpload.name}',overwrite=true)`;
+    
+    //     const requestOptions: ISPHttpClientOptions = {
+    //       body: filesUpload,
+    //       headers: {
+    //         'Content-Type': 'application/octet-stream',
+    //         'Accept': 'application/json'
+    //       }
+    //     };
+    
+    //     props.context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, requestOptions)
+    //       .then((response: SPHttpClientResponse): Promise<any> => {
+    //         if (response.ok) {
+    //           return response.json();
+    //         } else {
+    //           console.log(`Error uploading file: ${response.statusText}`);
+    //           return Promise.reject(response.statusText);
+    //         }
+    //       })
+    //       .then((responseJSON: any): void => {
+    //         console.log(`File uploaded successfully: ${responseJSON.ServerRelativeUrl}`);
+    //       })
+    //       .catch((error: any): void => {
+    //         console.log('Error occurred:', error);
+    //       });
+      }
+    
+    
+
+
 
 
   return (
@@ -774,12 +866,12 @@ const hideModal = () => {
       />
     {selectedOption && (
       <>
-      <TextField label="Additional Field" />
-      <TextField label="Upload" type="file" id='' />
+      <TextField label="Approver" onChange={handleApprover} />
+      <TextField label="Upload" type="file"  onChange={handleUploadChange} />
       </>
     )}
         <br />
-       <PrimaryButton text="Save" onClick={null} />
+       <PrimaryButton text="Save" onClick={uploadFile} />
           </p>
         </div>
       </Modal>
@@ -870,6 +962,43 @@ export default Dms;
 // }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //let itemSite: string = `${props.siteUrl}`
     //console.log ('site', itemSite)  //https://3zv7tj.sharepoint.com/
 
@@ -878,7 +1007,21 @@ export default Dms;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
   //let userResult : IDocItems[] = []
+
+
 
 
     {/* <Dialog
@@ -901,6 +1044,28 @@ export default Dms;
         </Dialog> */}
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // const convertToNavLinks = (items: DocArrayObj[]): INavLink[] => {
     //   return items.map((item) => ({
     //     name: item.name,
@@ -911,30 +1076,12 @@ export default Dms;
 
     // const navLinks: INavLink[] = convertToNavLinks(docItem);
 
-   
-
-  //console.log("FileItems",filesItem)
-
-
-//Show Dialog
-    // const showDialog = () => {
-    //   setIsDialogVisible(true);
-    // };
-  
-//Hide Dialog
-    // const hideDialog = () => {
-    //   setIsDialogVisible(false);
-    // };
-
-
 
    //   <HashRouter>
     //   <Switch>
     //     <Route component={HomeScreen} path="/" exact/>
     //   </Switch>
     // </HashRouter>
-
-
 
    //   <div>
     //     <ul>
